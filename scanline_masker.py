@@ -1,31 +1,19 @@
-from osgeo  import gdal, gdal_array
-import numpy as np
-import os
+import sys, os, arcpy
+from arcpy.sa import *
+arcpy.CheckOutExtension("Spatial")
+arcpy.env.overwriteOutput = True
 
-directory = "U:\Shared\GIS\StuData\TRTIMM3460\Fall 2016\GISC 3200K\Project_Images\LE70130352012135EDC00"
-mask_directory = "U:\Shared\GIS\StuData\TRTIMM3460\Fall 2016\GISC 3200K\Project_Images\LE70130352012135EDC00\gap_mask"
-bandlist = []
-masklist = []
-os.chdir(directory)
-for filename in os.listdir(directory):
-    if filename[-6] == 'B':
-        bandlist.append(filename)
-bandlist = tuple(bandlist)
+wd="C:\Imagery\LE70180362016309EDC00" #have this as your directory where all rasters are located
 
-b1 = gdal.Open(bandlist[0])
-b2 = gdal.Open(bandlist[1])
-array1 = b1.ReadAsArray()
-array2 = b2.ReadAsArray()
+arcpy.env.workspace = wd
+raster_list=arcpy.ListRasters("", "tif")
 
-for maskname in os.listdir(mask_directory):
-    if maskname[-6] == 'B':
-        masklist.append(maskname)
-masklist = tuple(masklist)
-os.chdir(mask_directory)
-m1 = gdal.Open(masklist[0])
-m2 = gdal.Open(masklist[1])
-marray1 = m1.ReadAsArray()
-marray2 = m2.ReadAsArray()
+for Ras in raster_list:
+    arcpy.AddMessage("Processing" + Ras)
+    desc = arcpy.Describe(Ras)
+    if desc.bandCount == 1:
+        arcpy.SetRasterProperties_management(Ras, nodata="1 0")
+    Con(IsNull(Ras), FocalStatistics(Ras, NbrRectangle(15,15,"CELL"),"MEAN"),Ras).save("C:\Imagery\LE70180362016309EDC00\SC_Corrected\{}".format(Ras))
 
-
-stacked = np.array([array1,array2])
+ 
+        
